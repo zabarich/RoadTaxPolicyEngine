@@ -1,0 +1,139 @@
+{
+  "metadata": {
+    "description": "Key constants and configuration values for the policy engine",
+    "lastUpdated": "2024-01-01"
+  },
+  "financialConstants": {
+    "revenuePerConversion": -165,
+    "revenuePerPercentFleetConversion": 107250,
+    "averageICEDuty": 230,
+    "currentEVDuty": 65,
+    "evDutyAsPercentOfICE": 28.3,
+    "sixMonthAdminCharge": 6,
+    "minimumDuty": 28,
+    "maximumDuty": 2197
+  },
+  "fleetConstants": {
+    "totalVehicles": 65000,
+    "vehiclesPerPercentage": 650,
+    "currentEVCount": 1500,
+    "currentEVPercentage": 2.3,
+    "motorcyclePercentage": 10,
+    "goodsVehiclePercentage": 8
+  },
+  "modelingDefaults": {
+    "startYear": 2024,
+    "endYear": 2035,
+    "defaultProjectionYears": 10,
+    "defaultPriceElasticity": -0.3,
+    "defaultAdoptionCurve": "sCurve",
+    "inflectionPointYear": 2027
+  },
+  "adoptionParameters": {
+    "baselineGrowthRate": 0.638,
+    "conservativeGrowthRate": 0.25,
+    "aggressiveGrowthRate": 0.85,
+    "maxAdoptionRate": 0.95,
+    "earlyAdopterThreshold": 0.025,
+    "majorityThreshold": 0.5,
+    "laggardThreshold": 0.84
+  },
+  "policyConstraints": {
+    "maxAnnualDutyIncrease": 0.25,
+    "minAnnualDutyIncrease": 0.0,
+    "maxDutyRate": 1000,
+    "minDutyRate": 0,
+    "politicalFeasibilityThreshold": 0.15,
+    "requiresConsultationThreshold": 0.10
+  },
+  "externalFactors": {
+    "ukAverageDuty": 180,
+    "ukEVDuty": 0,
+    "fuelPriceVolatility": 0.3,
+    "chargingInfrastructureTarget": 500,
+    "currentChargingPoints": 133
+  },
+  "reportingThresholds": {
+    "criticalRevenueLoss": 0.10,
+    "warningRevenueLoss": 0.05,
+    "targetDeviationWarning": 0.20,
+    "breakEvenAlert": 0.02
+  },
+  "calculationParameters": {
+    "roundingPrecision": 2,
+    "currencyDecimals": 0,
+    "percentageDecimals": 1,
+    "confidenceIntervals": [0.95, 0.90, 0.80],
+    "monteCarloIterations": 10000
+  },
+  "scenarioPresets": {
+    "statusQuo": {
+      "name": "Status Quo",
+      "description": "No changes to current duty rates",
+      "evDutyGrowth": 0,
+      "iceDutyGrowth": 0
+    },
+    "gradualTransition": {
+      "name": "Gradual Transition",
+      "description": "Phased increase in EV duty over 6 years",
+      "evDutyGrowth": 0.15,
+      "iceDutyGrowth": 0.02
+    },
+    "revenueNeutral": {
+      "name": "Revenue Neutral",
+      "description": "Maintain current revenue levels",
+      "dynamicAdjustment": true,
+      "targetRevenue": 14700000
+    },
+    "aggressiveIncentive": {
+      "name": "Aggressive Incentive",
+      "description": "Keep low EV duty, increase ICE duty",
+      "evDutyGrowth": 0,
+      "iceDutyGrowth": 0.08
+    },
+    "equityFocused": {
+      "name": "Equity Focused",
+      "description": "Move toward equal contribution by vehicle type",
+      "targetRatio": 0.75,
+      "transitionYears": 5
+    }
+  },
+  "validationRules": {
+    "minFleetSize": 50000,
+    "maxFleetSize": 80000,
+    "minEVPercentage": 0,
+    "maxEVPercentage": 100,
+    "minRevenue": 0,
+    "maxRevenue": 50000000,
+    "minYear": 2018,
+    "maxYear": 2050
+  },
+  "displayFormats": {
+    "currency": {
+      "symbol": "£",
+      "position": "prefix",
+      "thousandsSeparator": ",",
+      "decimalSeparator": "."
+    },
+    "percentage": {
+      "symbol": "%",
+      "position": "suffix",
+      "multiplier": 100
+    },
+    "number": {
+      "thousandsSeparator": ",",
+      "decimalSeparator": "."
+    }
+  },
+  "chartColors": {
+    "ev": "#10b981",
+    "ice": "#ef4444",
+    "hybrid": "#f59e0b",
+    "revenue": "#3b82f6",
+    "baseline": "#6b7280",
+    "projection": "#8b5cf6",
+    "warning": "#f97316",
+    "success": "#22c55e",
+    "error": "#dc2626"
+  }
+}

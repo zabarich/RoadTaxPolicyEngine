@@ -1,0 +1,57 @@
+{
+  "metadata": {
+    "lastUpdated": "2024-01-01",
+    "currency": "GBP",
+    "sources": [
+      "Vehicle Duty Order 2023",
+      "Department of Infrastructure Reports 2024",
+      "Manx Radio Reports 2023-2024",
+      "iomtoday.co.im Articles 2024-2025"
+    ]
+  },
+  "financial": {
+    "vehicleDutyRevenue": {
+      "current": 15000000,
+      "preIncrease2023": 14000000,
+      "note": "After 10% increase in April 2023"
+    },
+    "roadsBudget": {
+      "maintenance": 6600000,
+      "structural": 1155000,
+      "total": 7755000,
+      "year": "2024/25"
+    },
+    "revenueDestination": "general_fund",
+    "roadsAsPercentOfRevenue": 51.7
+  },
+  "fleet": {
+    "totalVehicles": 65000,
+    "currentComposition": {
+      "ev": 1500,
+      "ice": 63500,
+      "evPercentage": 2.3,
+      "year": 2024
+    },
+    "projections": {
+      "governmentTarget2030": 13000,
+      "lowAmbition2030": 10000,
+      "targetEVPercentage2030": 20
+    },
+    "chargingInfrastructure": {
+      "chargingPoints": 133,
+      "vehiclesPerChargingPoint": 11.3,
+      "year": 2024
+    }
+  },
+  "revenueModel": {
+    "currentAnnualRevenue": 14702500,
+    "revenuePerEV": 65,
+    "revenuePerICE": 230,
+    "lossPerConversion": 165,
+    "lossPerPercentFleet": 107250,
+    "breakdownCurrent": {
+      "fromEVs": 97500,
+      "fromICEs": 14605000
+    }
+  }
+}

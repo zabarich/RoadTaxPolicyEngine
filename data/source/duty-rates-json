@@ -1,0 +1,208 @@
+{
+  "metadata": {
+    "source": "Vehicle Duty Order 2023",
+    "effectiveDate": "2023-04-01",
+    "lastIncrease": "10% in April 2023",
+    "currency": "GBP"
+  },
+  "electricVehicles": {
+    "flatRate": {
+      "annual": 65,
+      "sixMonth": 39,
+      "band": "ZEV",
+      "description": "All zero emission vehicles regardless of size or weight"
+    }
+  },
+  "emissionBands": {
+    "description": "For vehicles first registered after 1 April 2010",
+    "bands": {
+      "ZEV": {
+        "co2Range": "0",
+        "annual": 65,
+        "sixMonth": 39,
+        "description": "Zero emissions"
+      },
+      "A": {
+        "co2Range": "0-50",
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "B": {
+        "co2Range": "51-75",
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "C": {
+        "co2Range": "76-100",
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "D": {
+        "co2Range": "101-110",
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "E": {
+        "co2Range": "111-120",
+        "annual": 79,
+        "sixMonth": 46
+      },
+      "F": {
+        "co2Range": "121-130",
+        "annual": 169,
+        "sixMonth": 91
+      },
+      "G": {
+        "co2Range": "131-140",
+        "annual": 203,
+        "sixMonth": 108
+      },
+      "H": {
+        "co2Range": "141-150",
+        "annual": 235,
+        "sixMonth": 124
+      },
+      "I": {
+        "co2Range": "151-165",
+        "annual": 268,
+        "sixMonth": 140
+      },
+      "J": {
+        "co2Range": "166-175",
+        "annual": 302,
+        "sixMonth": 157
+      },
+      "K": {
+        "co2Range": "176-185",
+        "annual": 336,
+        "sixMonth": 174
+      },
+      "L": {
+        "co2Range": "186-200",
+        "annual": 394,
+        "sixMonth": 203
+      },
+      "M": {
+        "co2Range": "201-225",
+        "annual": 410,
+        "sixMonth": 211
+      },
+      "N": {
+        "co2Range": "226-255",
+        "annual": 700,
+        "sixMonth": 356
+      },
+      "O": {
+        "co2Range": "256+",
+        "annual": 724,
+        "sixMonth": 368
+      }
+    }
+  },
+  "engineSizeBands": {
+    "description": "For older vehicles or where CO2 data unavailable",
+    "bands": {
+      "up_to_1000cc": {
+        "range": "0-1000",
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "1001_to_1200cc": {
+        "range": "1001-1200",
+        "annual": 130,
+        "sixMonth": 71
+      },
+      "1201_to_1800cc": {
+        "range": "1201-1800",
+        "annual": 203,
+        "sixMonth": 108
+      },
+      "1801_to_2500cc": {
+        "range": "1801-2500",
+        "annual": 288,
+        "sixMonth": 150
+      },
+      "2501_to_3500cc": {
+        "range": "2501-3500",
+        "annual": 467,
+        "sixMonth": 240
+      },
+      "3501_to_5000cc": {
+        "range": "3501-5000",
+        "annual": 576,
+        "sixMonth": 294
+      },
+      "over_5000cc": {
+        "range": "5001+",
+        "annual": 612,
+        "sixMonth": 312
+      }
+    }
+  },
+  "otherVehicles": {
+    "motorcycles": {
+      "allCategories": {
+        "annual": 28,
+        "description": "All motorcycles, Category A, A1"
+      }
+    },
+    "goodsVehicles": {
+      "C1_up_to_7500kg": {
+        "annual": 363,
+        "sixMonth": 188
+      },
+      "C_7500_to_12000kg": {
+        "annual": 556,
+        "sixMonth": 284
+      },
+      "largerGoods": {
+        "range": "556-2197",
+        "description": "Depends on weight"
+      }
+    },
+    "specialCategories": {
+      "veteranVehicles": {
+        "annual": 28,
+        "description": "Private vehicles 30+ years old"
+      },
+      "welfareVehicles": {
+        "annual": 0,
+        "description": "Nil rate"
+      },
+      "policeVehicles": {
+        "annual": 0,
+        "description": "Nil rate"
+      },
+      "agriculturalMachines": {
+        "annual": 65,
+        "sixMonth": 39
+      },
+      "mowingMachines": {
+        "annual": 18,
+        "sixMonth": null,
+        "description": "No 6-month option"
+      }
+    },
+    "trailers": {
+      "semiTrailers": {
+        "annual": 0,
+        "description": "No licence required"
+      },
+      "under2000kg": {
+        "annual": 0,
+        "description": "No licence required"
+      },
+      "other": {
+        "annual": 180,
+        "sixMonth": 96
+      }
+    }
+  },
+  "statistics": {
+    "averageICEDuty": 230,
+    "averageEVDuty": 65,
+    "evAsPercentOfICE": 28.3,
+    "sixMonthAdminCharge": 6,
+    "note": "Six-month payment = half annual fee plus £6"
+  }
+}
