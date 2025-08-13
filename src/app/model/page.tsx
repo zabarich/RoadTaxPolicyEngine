@@ -11,7 +11,7 @@ import { DutyRateControls } from '@/components/inputs/duty-rate-controls';
 import { AdoptionCurveEditor } from '@/components/inputs/adoption-curve-editor';
 import { PolicyMechanisms } from '@/components/inputs/policy-mechanisms';
 import { PresetScenarios } from '@/components/inputs/preset-scenarios';
-import { CalculationDebug } from '@/components/debug/calculation-debug';
+
 import { usePolicyEngineStore } from '@/lib/store/policy-engine-store';
 import { RevenueChartData, FleetChartData } from '@/lib/types';
 import { constants } from '@/lib/data/constants';
@@ -219,7 +219,6 @@ export default function ModelPage() {
                   <DutyRateControls />
                   <AdoptionCurveEditor />
                   <PolicyMechanisms />
-                  <CalculationDebug />
                 </TabsContent>
                 
                 <TabsContent value="presets" className="space-y-4">
