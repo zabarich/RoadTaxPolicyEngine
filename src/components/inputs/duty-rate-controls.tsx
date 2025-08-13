@@ -1,13 +1,16 @@
 'use client';
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePolicyEngineStore } from "@/lib/store/policy-engine-store";
+import { CategoryAdjustment } from "@/lib/types";
 import { constants } from "@/lib/data/constants";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, ChevronDown } from "lucide-react";
 
 interface DutyRateControlsProps {
   className?: string;
@@ -172,7 +175,241 @@ export function DutyRateControls({ className }: DutyRateControlsProps) {
             </Button>
           </div>
         </div>
+
+        {/* Category Adjustments Section */}
+        <CategoryAdjustmentSection />
       </CardContent>
     </Card>
+  );
+}
+
+// Category Adjustment Component
+function CategoryAdjustmentSection() {
+  const { currentScenario, updateScenarioParameter } = usePolicyEngineStore();
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(2025);
+
+  // Key categories for manual adjustment
+  const categories = [
+    { id: 'ev', name: 'Electric Vehicles', baseRate: 65, path: 'ev' },
+    { id: 'motorcycles', name: 'Motorcycles', baseRate: 28, path: 'motorcycles' },
+    { id: 'light-goods', name: 'Light Goods (≤7.5t)', baseRate: 363, path: 'goodsVehicles.light' },
+    { id: 'heavy-goods', name: 'Heavy Goods (>12t)', baseRate: 1100, path: 'goodsVehicles.heavy' },
+    { id: 'high-emission', name: 'High Emission ICE', baseRate: 700, path: 'emissionBands.N' },
+    { id: 'agricultural', name: 'Agricultural', baseRate: 65, path: 'specialCategories.agricultural' }
+  ];
+
+  const setAdjustment = (path: string, year: number, type: CategoryAdjustment['type'], value: number) => {
+    const adjustment: CategoryAdjustment = {
+      type,
+      value,
+      startYear: year,
+      description: `${type === 'lift' ? 'Increase' : type === 'reduce' ? 'Decrease' : 'Hold'} for ${year}`
+    };
+    
+    const parameterPath = `parameters.categoryAdjustments.${path}.${year}`;
+    updateScenarioParameter(parameterPath, adjustment);
+  };
+
+  const removeAdjustment = (path: string, year: number) => {
+    const parameterPath = `parameters.categoryAdjustments.${path}.${year}`;
+    updateScenarioParameter(parameterPath, undefined);
+  };
+
+  const getAdjustment = (path: string, year: number): CategoryAdjustment | null => {
+    if (!currentScenario.parameters.categoryAdjustments) return null;
+    
+    const parts = path.split('.');
+    let adjustments: any = currentScenario.parameters.categoryAdjustments;
+    
+    for (const part of parts) {
+      adjustments = adjustments?.[part];
+      if (!adjustments) return null;
+    }
+    
+    return adjustments[year] || null;
+  };
+
+  const calculateAdjustedRate = (baseRate: number, adjustment: CategoryAdjustment | null) => {
+    if (!adjustment) return baseRate;
+    
+    switch (adjustment.type) {
+      case 'lift':
+        return baseRate * (1 + adjustment.value / 100);
+      case 'reduce':
+        return baseRate * (1 - adjustment.value / 100);
+      case 'hold':
+        return baseRate;
+      case 'absolute':
+        return adjustment.value;
+      default:
+        return baseRate;
+    }
+  };
+
+  const getAdjustmentDisplay = (adjustment: CategoryAdjustment | null) => {
+    if (!adjustment) return 'Base Rate';
+    
+    switch (adjustment.type) {
+      case 'lift':
+        return `+${adjustment.value}%`;
+      case 'reduce':
+        return `-${adjustment.value}%`;
+      case 'hold':
+        return 'Hold';
+      case 'absolute':
+        return `£${adjustment.value}`;
+      default:
+        return 'Base Rate';
+    }
+  };
+
+  return (
+    <div className="space-y-3 pt-4 border-t">
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Category Adjustments</Label>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="h-8 text-xs"
+        >
+          {showAdvanced ? 'Hide' : 'Show'} Advanced
+          <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+        </Button>
+      </div>
+
+      <div className="text-xs text-muted-foreground">
+        Apply manual lift, hold, or reduce adjustments to specific vehicle categories per year.
+      </div>
+
+      {showAdvanced && (
+        <div className="space-y-4 bg-muted/30 p-4 rounded-lg">
+          {/* Year Selection */}
+          <div className="flex items-center gap-2">
+            <Label className="text-xs font-medium">Adjustment Year:</Label>
+            <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(Number(value))}>
+              <SelectTrigger className="w-24 h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => 2024 + i).map(year => (
+                  <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Category Controls */}
+          <div className="space-y-3">
+            <Label className="text-xs font-medium">Vehicle Categories</Label>
+            {categories.map((category) => {
+              const adjustment = getAdjustment(category.path, selectedYear);
+              const adjustedRate = calculateAdjustedRate(category.baseRate, adjustment);
+              const hasAdjustment = !!adjustment;
+              
+              return (
+                <div key={category.id} className="grid grid-cols-4 gap-2 items-center text-xs p-2 rounded border">
+                  {/* Category Name */}
+                  <div className="font-medium">{category.name}</div>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex gap-1">
+                    <Button
+                      variant={adjustment?.type === 'reduce' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        if (adjustment?.type === 'reduce') {
+                          removeAdjustment(category.path, selectedYear);
+                        } else {
+                          setAdjustment(category.path, selectedYear, 'reduce', 15);
+                        }
+                      }}
+                    >
+                      -15%
+                    </Button>
+                    <Button
+                      variant={adjustment?.type === 'hold' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        if (adjustment?.type === 'hold') {
+                          removeAdjustment(category.path, selectedYear);
+                        } else {
+                          setAdjustment(category.path, selectedYear, 'hold', 0);
+                        }
+                      }}
+                    >
+                      Hold
+                    </Button>
+                    <Button
+                      variant={adjustment?.type === 'lift' ? 'default' : 'outline'}
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        if (adjustment?.type === 'lift') {
+                          removeAdjustment(category.path, selectedYear);
+                        } else {
+                          setAdjustment(category.path, selectedYear, 'lift', 20);
+                        }
+                      }}
+                    >
+                      +20%
+                    </Button>
+                  </div>
+                  
+                  {/* Current Rate */}
+                  <div className="text-right">
+                    <div className={`font-semibold ${hasAdjustment ? 'text-blue-600' : 'text-gray-600'}`}>
+                      £{Math.round(adjustedRate)}
+                    </div>
+                  </div>
+                  
+                  {/* Adjustment Status */}
+                  <div className="text-right">
+                    <div className={`text-xs ${hasAdjustment ? 'text-blue-600' : 'text-muted-foreground'}`}>
+                      {getAdjustmentDisplay(adjustment)}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex gap-2 pt-2 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                categories.forEach(cat => removeAdjustment(cat.path, selectedYear));
+              }}
+            >
+              Clear All
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                // Environmental policy: incentivize EVs, penalize high emissions
+                setAdjustment('ev', selectedYear, 'reduce', 20);
+                setAdjustment('emissionBands.N', selectedYear, 'lift', 30);
+                setAdjustment('specialCategories.agricultural', selectedYear, 'reduce', 10);
+              }}
+            >
+              Environmental Policy
+            </Button>
+          </div>
+
+          <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+            💡 <strong>How it works:</strong> Select a year, then click the buttons to apply adjustments. 
+            Blue rates show active adjustments. Changes apply from the selected year onwards.
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

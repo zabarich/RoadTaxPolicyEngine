@@ -151,6 +151,34 @@ export interface Constants {
   chartColors: Record<string, string>;
 }
 
+// Category adjustment types for manual duty rate control per year
+export interface CategoryAdjustment {
+  type: 'lift' | 'hold' | 'reduce' | 'absolute';
+  value: number; // percentage for lift/reduce, or absolute amount for absolute
+  startYear: number;
+  endYear?: number; // if not specified, applies indefinitely
+  description?: string; // optional explanation for the adjustment
+}
+
+export interface CategoryAdjustments {
+  ev: Record<number, CategoryAdjustment>; // year -> adjustment
+  motorcycles: Record<number, CategoryAdjustment>;
+  goodsVehicles: {
+    light: Record<number, CategoryAdjustment>; // up to 7.5t (C1)
+    medium: Record<number, CategoryAdjustment>; // 7.5-12t (C)
+    heavy: Record<number, CategoryAdjustment>; // 12t+ (larger goods)
+  };
+  emissionBands: {
+    [band: string]: Record<number, CategoryAdjustment>; // 'A', 'B', 'C' etc.
+  };
+  specialCategories: {
+    veteran: Record<number, CategoryAdjustment>; // 30+ year old vehicles
+    welfare: Record<number, CategoryAdjustment>; // disabled drivers
+    agricultural: Record<number, CategoryAdjustment>; // farming vehicles
+    police: Record<number, CategoryAdjustment>; // police vehicles
+  };
+}
+
 export interface ScenarioConfig {
   id: string;
   name: string;
@@ -187,6 +215,9 @@ export interface ScenarioConfig {
         averageMilesPerVehicle: number;
       };
     };
+    
+    // Category-specific manual adjustments per year
+    categoryAdjustments?: CategoryAdjustments;
   };
 }
 

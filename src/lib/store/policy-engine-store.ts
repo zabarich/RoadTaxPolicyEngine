@@ -68,6 +68,22 @@ const createDefaultScenario = (): ScenarioConfig => ({
         startYear: constants.modelingDefaults.startYear,
         averageMilesPerVehicle: 10000
       }
+    },
+    categoryAdjustments: {
+      ev: {},
+      motorcycles: {},
+      goodsVehicles: {
+        light: {},
+        medium: {},
+        heavy: {}
+      },
+      emissionBands: {},
+      specialCategories: {
+        veteran: {},
+        welfare: {},
+        agricultural: {},
+        police: {}
+      }
     }
   }
 });

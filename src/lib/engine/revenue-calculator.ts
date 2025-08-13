@@ -63,9 +63,9 @@ export class RevenueCalculator {
 
       // Calculate average duty by type
       results.impacts.averageDutyByType[year] = {
-        ev: this.getEVDutyForYear(year, config),
+        ev: this.getAdjustedEVDutyForYear(year, config),
         ice: this.getICEDutyForYear(year, config),
-        ratio: this.getEVDutyForYear(year, config) / this.getICEDutyForYear(year, config)
+        ratio: this.getAdjustedEVDutyForYear(year, config) / this.getICEDutyForYear(year, config)
       };
 
       // Check for break-even year
@@ -256,7 +256,7 @@ export class RevenueCalculator {
   }
 
   private calculateYearRevenue(year: number, fleet: FleetComposition, config: ScenarioConfig): YearRevenue {
-    const evDuty = this.getEVDutyForYear(year, config);
+    const evDuty = this.getAdjustedEVDutyForYear(year, config);
     const iceDuty = this.getICEDutyForYear(year, config);
     
     const fromEV = fleet.ev * evDuty;
@@ -317,6 +317,47 @@ export class RevenueCalculator {
     // Simplified - use average ICE duty for now
     // In practice, this would need to account for emission band distribution
     return this.baseline.revenueModel.revenuePerICE;
+  }
+
+  // Category adjustment helper methods
+  private getActiveAdjustment(year: number, adjustments: Record<number, any>): any | null {
+    const applicableYears = Object.keys(adjustments)
+      .map(Number)
+      .filter(adjYear => {
+        const adj = adjustments[adjYear];
+        return adjYear <= year && (!adj.endYear || year <= adj.endYear);
+      })
+      .sort((a, b) => b - a); // Most recent first
+
+    return applicableYears.length > 0 ? adjustments[applicableYears[0]] : null;
+  }
+
+  private applyAdjustment(baseRate: number, adjustment: any): number {
+    if (!adjustment) return baseRate;
+
+    switch (adjustment.type) {
+      case 'lift':
+        return baseRate * (1 + adjustment.value / 100);
+      case 'reduce':
+        return baseRate * (1 - adjustment.value / 100);
+      case 'hold':
+        return baseRate;
+      case 'absolute':
+        return adjustment.value;
+      default:
+        return baseRate;
+    }
+  }
+
+  private getAdjustedEVDutyForYear(year: number, config: ScenarioConfig): number {
+    const baseRate = this.getEVDutyForYear(year, config);
+    
+    if (!config.parameters.categoryAdjustments?.ev) {
+      return baseRate;
+    }
+
+    const adjustment = this.getActiveAdjustment(year, config.parameters.categoryAdjustments.ev);
+    return this.applyAdjustment(baseRate, adjustment);
   }
 
   private calculateOtherMechanisms(year: number, fleet: FleetComposition, config: ScenarioConfig): number {
