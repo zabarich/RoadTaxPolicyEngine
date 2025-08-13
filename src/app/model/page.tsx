@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +9,8 @@ import { RevenueProjection } from '@/components/charts/revenue-projection';
 import { FleetComposition } from '@/components/charts/fleet-composition';
 import { DutyRateControls } from '@/components/inputs/duty-rate-controls';
 import { AdoptionCurveEditor } from '@/components/inputs/adoption-curve-editor';
+import { PolicyMechanisms } from '@/components/inputs/policy-mechanisms';
+import { PresetScenarios } from '@/components/inputs/preset-scenarios';
 import { CalculationDebug } from '@/components/debug/calculation-debug';
 import { usePolicyEngineStore } from '@/lib/store/policy-engine-store';
 import { RevenueChartData, FleetChartData } from '@/lib/types';
@@ -22,8 +24,17 @@ export default function ModelPage() {
     results, 
     isCalculating, 
     calculateResults,
-    resetToBaseline
+    resetToBaseline,
+    saveScenario,
+    exportToPDF,
+    exportToCSV
   } = usePolicyEngineStore();
+
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [scenarioName, setScenarioName] = useState('');
+  const [scenarioDescription, setScenarioDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Initial calculation
   useEffect(() => {
@@ -31,6 +42,41 @@ export default function ModelPage() {
       calculateResults();
     }
   }, [calculateResults, results]);
+
+  const handleSaveScenario = async () => {
+    if (!scenarioName.trim()) return;
+    
+    setIsSaving(true);
+    try {
+      await saveScenario(scenarioName.trim(), scenarioDescription.trim());
+      setShowSaveDialog(false);
+      setScenarioName('');
+      setScenarioDescription('');
+    } catch (error) {
+      console.error('Failed to save scenario:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportPDF = async (template: 'executive' | 'detailed' | 'technical' = 'executive') => {
+    setIsExporting(true);
+    try {
+      await exportToPDF(template);
+    } catch (error) {
+      console.error('Failed to export PDF:', error);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      exportToCSV();
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+    }
+  };
 
   // Transform results into chart data
   const getRevenueChartData = (): RevenueChartData[] => {
@@ -161,9 +207,13 @@ export default function ModelPage() {
         <div className="grid lg:grid-cols-4 gap-6">
           {/* Left Panel - Controls */}
           <div className="lg:col-span-1 space-y-6">
+            <PresetScenarios />
+            
             <DutyRateControls />
             
             <AdoptionCurveEditor />
+
+            <PolicyMechanisms />
 
             <CalculationDebug />
 
@@ -173,16 +223,96 @@ export default function ModelPage() {
                 <CardTitle>Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button className="w-full" size="sm">
+                <Button 
+                  className="w-full" 
+                  size="sm"
+                  onClick={() => setShowSaveDialog(true)}
+                  disabled={isSaving}
+                >
                   <Save className="h-4 w-4 mr-2" />
-                  Save Scenario
+                  {isSaving ? 'Saving...' : 'Save Scenario'}
                 </Button>
-                <Button variant="outline" className="w-full" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Report
-                </Button>
+                
+                <div className="space-y-1">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    size="sm"
+                    onClick={() => handleExportPDF('executive')}
+                    disabled={isExporting}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {isExporting ? 'Exporting...' : 'Export PDF'}
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    size="sm"
+                    onClick={handleExportCSV}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Export CSV Data
+                  </Button>
+                </div>
               </CardContent>
             </Card>
+
+            {/* Save Dialog */}
+            {showSaveDialog && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                <Card className="w-full max-w-md">
+                  <CardHeader>
+                    <CardTitle>Save Scenario</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium">Name *</label>
+                      <input
+                        type="text"
+                        value={scenarioName}
+                        onChange={(e) => setScenarioName(e.target.value)}
+                        className="w-full p-2 border rounded-md mt-1"
+                        placeholder="Enter scenario name"
+                        autoFocus
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Description</label>
+                      <textarea
+                        value={scenarioDescription}
+                        onChange={(e) => setScenarioDescription(e.target.value)}
+                        className="w-full p-2 border rounded-md mt-1 h-20 resize-none"
+                        placeholder="Optional description"
+                      />
+                    </div>
+                    
+                    <div className="flex gap-2 justify-end">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setShowSaveDialog(false);
+                          setScenarioName('');
+                          setScenarioDescription('');
+                        }}
+                        disabled={isSaving}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        size="sm"
+                        onClick={handleSaveScenario}
+                        disabled={!scenarioName.trim() || isSaving}
+                      >
+                        {isSaving ? 'Saving...' : 'Save'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </div>
 
           {/* Center Panel - Visualizations */}
