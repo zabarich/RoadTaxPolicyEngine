@@ -204,119 +204,91 @@ export default function ModelPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid lg:grid-cols-4 gap-6">
-          {/* Left Panel - Controls */}
-          <div className="lg:col-span-1 space-y-6">
-            <PresetScenarios />
-            
-            <DutyRateControls />
-            
-            <AdoptionCurveEditor />
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Left Panel - Controls with Tabs for Better UX */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-6">
+              <Tabs defaultValue="controls" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="controls" className="text-xs">Controls</TabsTrigger>
+                  <TabsTrigger value="presets" className="text-xs">Presets</TabsTrigger>
+                  <TabsTrigger value="actions" className="text-xs">Actions</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="controls" className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
+                  <DutyRateControls />
+                  <AdoptionCurveEditor />
+                  <PolicyMechanisms />
+                  <CalculationDebug />
+                </TabsContent>
+                
+                <TabsContent value="presets" className="space-y-4">
+                  <PresetScenarios />
+                </TabsContent>
+                
+                <TabsContent value="actions" className="space-y-4">
+                  {/* Save/Export Actions */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Save & Export</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <Button 
+                        className="w-full" 
+                        size="sm"
+                        onClick={() => setShowSaveDialog(true)}
+                        disabled={isSaving}
+                      >
+                        <Save className="h-4 w-4 mr-2" />
+                        {isSaving ? 'Saving...' : 'Save Scenario'}
+                      </Button>
+                      
+                      <div className="space-y-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          size="sm"
+                          onClick={() => handleExportPDF('executive')}
+                          disabled={isExporting}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          {isExporting ? 'Exporting...' : 'Export PDF'}
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          size="sm"
+                          onClick={handleExportCSV}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export CSV Data
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
 
-            <PolicyMechanisms />
-
-            <CalculationDebug />
-
-            {/* Save/Export Actions */}
+          {/* Right Panel - Results (Wider for better visibility) */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Key Metrics - Always Visible at Top */}
             <Card>
               <CardHeader>
-                <CardTitle>Actions</CardTitle>
+                <CardTitle>Key Metrics</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  className="w-full" 
-                  size="sm"
-                  onClick={() => setShowSaveDialog(true)}
-                  disabled={isSaving}
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? 'Saving...' : 'Save Scenario'}
-                </Button>
-                
-                <div className="space-y-1">
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    size="sm"
-                    onClick={() => handleExportPDF('executive')}
-                    disabled={isExporting}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isExporting ? 'Exporting...' : 'Export PDF'}
-                  </Button>
-                  
-                  <Button 
-                    variant="outline" 
-                    className="w-full" 
-                    size="sm"
-                    onClick={handleExportCSV}
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV Data
-                  </Button>
+              <CardContent>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  {getKeyMetrics().map((metric, index) => (
+                    <MetricCard key={index} {...metric} />
+                  ))}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Save Dialog */}
-            {showSaveDialog && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                <Card className="w-full max-w-md">
-                  <CardHeader>
-                    <CardTitle>Save Scenario</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium">Name *</label>
-                      <input
-                        type="text"
-                        value={scenarioName}
-                        onChange={(e) => setScenarioName(e.target.value)}
-                        className="w-full p-2 border rounded-md mt-1"
-                        placeholder="Enter scenario name"
-                        autoFocus
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium">Description</label>
-                      <textarea
-                        value={scenarioDescription}
-                        onChange={(e) => setScenarioDescription(e.target.value)}
-                        className="w-full p-2 border rounded-md mt-1 h-20 resize-none"
-                        placeholder="Optional description"
-                      />
-                    </div>
-                    
-                    <div className="flex gap-2 justify-end">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          setShowSaveDialog(false);
-                          setScenarioName('');
-                          setScenarioDescription('');
-                        }}
-                        disabled={isSaving}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={handleSaveScenario}
-                        disabled={!scenarioName.trim() || isSaving}
-                      >
-                        {isSaving ? 'Saving...' : 'Save'}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-          </div>
-
-          {/* Center Panel - Visualizations */}
-          <div className="lg:col-span-2 space-y-6">
+            {/* Charts */}
             <Tabs defaultValue="revenue" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="revenue">Revenue Projection</TabsTrigger>
@@ -363,30 +335,14 @@ export default function ModelPage() {
                 </Card>
               </TabsContent>
             </Tabs>
-          </div>
 
-          {/* Right Panel - Metrics */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Metrics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {getKeyMetrics().map((metric, index) => (
-                    <MetricCard key={index} {...metric} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Warnings/Insights */}
+            {/* Insights */}
             <Card>
               <CardHeader>
                 <CardTitle>Insights</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 text-sm">
+                <div className="grid md:grid-cols-2 gap-3 text-sm">
                   {results && (
                     <>
                       {results.metrics.peakRevenueGap > 1000000 && (
@@ -440,6 +396,62 @@ export default function ModelPage() {
           </div>
         </div>
       </div>
+
+      {/* Save Dialog */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Save Scenario</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Name *</label>
+                <input
+                  type="text"
+                  value={scenarioName}
+                  onChange={(e) => setScenarioName(e.target.value)}
+                  className="w-full p-2 border rounded-md mt-1"
+                  placeholder="Enter scenario name"
+                  autoFocus
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  value={scenarioDescription}
+                  onChange={(e) => setScenarioDescription(e.target.value)}
+                  className="w-full p-2 border rounded-md mt-1 h-20 resize-none"
+                  placeholder="Optional description"
+                />
+              </div>
+              
+              <div className="flex gap-2 justify-end">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setShowSaveDialog(false);
+                    setScenarioName('');
+                    setScenarioDescription('');
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  size="sm"
+                  onClick={handleSaveScenario}
+                  disabled={!scenarioName.trim() || isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

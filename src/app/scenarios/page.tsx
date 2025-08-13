@@ -107,7 +107,7 @@ export default function ScenariosPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                You haven't saved any scenarios yet. Create your first scenario to start comparing policy options.
+                You haven&apos;t saved any scenarios yet. Create your first scenario to start comparing policy options.
               </p>
               <Link href="/model">
                 <Button>

@@ -15,9 +15,10 @@ interface PolicyEngineStore {
   isCalculating: boolean;
   activePanel: 'inputs' | 'results' | 'compare';
   selectedYearRange: [number, number];
+  suppressAutoCalculation: boolean;
   
   // Actions
-  updateScenarioParameter: (path: string, value: unknown) => void;
+  updateScenarioParameter: (path: string, value: unknown, suppressCalculation?: boolean) => void;
   calculateResults: () => Promise<void>;
   saveScenario: (name: string, description?: string) => Promise<void>;
   loadScenario: (id: string) => Promise<void>;
@@ -79,9 +80,10 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
   isCalculating: false,
   activePanel: 'inputs',
   selectedYearRange: [constants.modelingDefaults.startYear, constants.modelingDefaults.endYear],
+  suppressAutoCalculation: false,
 
   // Actions
-  updateScenarioParameter: (path: string, value: unknown) => {
+  updateScenarioParameter: (path: string, value: unknown, suppressCalculation = false) => {
     const scenario = get().currentScenario;
     const pathParts = path.split('.');
     
@@ -102,12 +104,14 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
     
     set({ currentScenario: updatedScenario });
     
-    // Trigger immediate recalculation
-    setTimeout(() => {
-      if (!get().isCalculating) {
-        get().calculateResults();
-      }
-    }, 0);
+    // Trigger immediate recalculation only if not suppressed
+    if (!suppressCalculation && !get().suppressAutoCalculation) {
+      setTimeout(() => {
+        if (!get().isCalculating) {
+          get().calculateResults();
+        }
+      }, 100); // Slightly longer delay to prevent rapid firing
+    }
   },
 
   calculateResults: async () => {
@@ -125,7 +129,7 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
         body: JSON.stringify({
           scenario: {
             ...currentScenario,
-            createdAt: currentScenario.createdAt.toISOString(),
+            createdAt: currentScenario.createdAt instanceof Date ? currentScenario.createdAt.toISOString() : currentScenario.createdAt,
             parameters: {
               ...currentScenario.parameters,
               dutyRates: {
@@ -441,7 +445,7 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
         body: JSON.stringify({
           scenario: {
             ...currentScenario,
-            createdAt: currentScenario.createdAt.toISOString()
+            createdAt: currentScenario.createdAt instanceof Date ? currentScenario.createdAt.toISOString() : currentScenario.createdAt
           },
           results: finalResults,
           template,

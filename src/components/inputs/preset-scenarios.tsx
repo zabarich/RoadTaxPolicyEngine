@@ -178,30 +178,52 @@ export function PresetScenarios({ className }: PresetScenariosProps) {
     }
   };
 
-  const applyPreset = (presetName: string) => {
+  const applyPreset = async (presetName: string) => {
     const preset = createPresetScenario(presetName);
     
-    // Update scenario parameters
-    Object.entries(preset.parameters?.dutyRates.ev || {}).forEach(([year, rate]) => {
-      updateScenarioParameter(`parameters.dutyRates.ev.${year}`, rate);
-    });
-
-    updateScenarioParameter('parameters.adoptionModel.type', preset.parameters?.adoptionModel.type);
-    updateScenarioParameter('parameters.adoptionModel.priceElasticity', preset.parameters?.adoptionModel.priceElasticity);
+    // Suppress auto-calculation during batch updates
+    const { calculateResults } = usePolicyEngineStore.getState();
+    usePolicyEngineStore.setState({ suppressAutoCalculation: true });
     
-    Object.entries(preset.parameters?.adoptionModel.targetEVCount || {}).forEach(([year, count]) => {
-      updateScenarioParameter(`parameters.adoptionModel.targetEVCount.${year}`, count);
-    });
+    try {
+      // Clear existing duty rates first
+      const currentYears = Object.keys(usePolicyEngineStore.getState().currentScenario.parameters.dutyRates.ev);
+      currentYears.forEach(year => {
+        updateScenarioParameter(`parameters.dutyRates.ev.${year}`, undefined, true);
+      });
+      
+      // Update scenario parameters with suppressed calculation
+      Object.entries(preset.parameters?.dutyRates.ev || {}).forEach(([year, rate]) => {
+        updateScenarioParameter(`parameters.dutyRates.ev.${year}`, rate, true);
+      });
 
-    // Policy mechanisms
-    updateScenarioParameter('parameters.policyMechanisms.weightBased.enabled', preset.parameters?.policyMechanisms.weightBased.enabled);
-    updateScenarioParameter('parameters.policyMechanisms.weightBased.ratePerKg', preset.parameters?.policyMechanisms.weightBased.ratePerKg);
-    updateScenarioParameter('parameters.policyMechanisms.weightBased.startYear', preset.parameters?.policyMechanisms.weightBased.startYear);
+      updateScenarioParameter('parameters.adoptionModel.type', preset.parameters?.adoptionModel.type, true);
+      updateScenarioParameter('parameters.adoptionModel.priceElasticity', preset.parameters?.adoptionModel.priceElasticity, true);
+      
+      // Clear existing target counts
+      const currentTargets = Object.keys(usePolicyEngineStore.getState().currentScenario.parameters.adoptionModel.targetEVCount);
+      currentTargets.forEach(year => {
+        updateScenarioParameter(`parameters.adoptionModel.targetEVCount.${year}`, undefined, true);
+      });
+      
+      Object.entries(preset.parameters?.adoptionModel.targetEVCount || {}).forEach(([year, count]) => {
+        updateScenarioParameter(`parameters.adoptionModel.targetEVCount.${year}`, count, true);
+      });
 
-    updateScenarioParameter('parameters.policyMechanisms.distanceBased.enabled', preset.parameters?.policyMechanisms.distanceBased.enabled);
-    updateScenarioParameter('parameters.policyMechanisms.distanceBased.ratePerMile', preset.parameters?.policyMechanisms.distanceBased.ratePerMile);
-    updateScenarioParameter('parameters.policyMechanisms.distanceBased.startYear', preset.parameters?.policyMechanisms.distanceBased.startYear);
-    updateScenarioParameter('parameters.policyMechanisms.distanceBased.averageMilesPerVehicle', preset.parameters?.policyMechanisms.distanceBased.averageMilesPerVehicle);
+      // Policy mechanisms
+      updateScenarioParameter('parameters.policyMechanisms.weightBased.enabled', preset.parameters?.policyMechanisms.weightBased.enabled, true);
+      updateScenarioParameter('parameters.policyMechanisms.weightBased.ratePerKg', preset.parameters?.policyMechanisms.weightBased.ratePerKg, true);
+      updateScenarioParameter('parameters.policyMechanisms.weightBased.startYear', preset.parameters?.policyMechanisms.weightBased.startYear, true);
+
+      updateScenarioParameter('parameters.policyMechanisms.distanceBased.enabled', preset.parameters?.policyMechanisms.distanceBased.enabled, true);
+      updateScenarioParameter('parameters.policyMechanisms.distanceBased.ratePerMile', preset.parameters?.policyMechanisms.distanceBased.ratePerMile, true);
+      updateScenarioParameter('parameters.policyMechanisms.distanceBased.startYear', preset.parameters?.policyMechanisms.distanceBased.startYear, true);
+      updateScenarioParameter('parameters.policyMechanisms.distanceBased.averageMilesPerVehicle', preset.parameters?.policyMechanisms.distanceBased.averageMilesPerVehicle, true);
+    } finally {
+      // Re-enable auto-calculation and trigger one calculation
+      usePolicyEngineStore.setState({ suppressAutoCalculation: false });
+      await calculateResults();
+    }
   };
 
   const presets = [

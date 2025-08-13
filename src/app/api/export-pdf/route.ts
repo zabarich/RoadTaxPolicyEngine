@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Document, Page, Text, View, StyleSheet, pdf, Font } from '@react-pdf/renderer';
-import { ScenarioConfig, ScenarioResults } from '@/lib/types';
+import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import React from 'react';
 
 // Validation schema for PDF export request
@@ -103,177 +102,24 @@ const styles = StyleSheet.create({
   }
 });
 
-// PDF Component
-const PolicyReport: React.FC<{
-  scenario: ScenarioConfig;
-  results: ScenarioResults;
-  template: string;
-  options: any;
-}> = ({ scenario, results, template, options }) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: 'GBP',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-      notation: Math.abs(value) >= 1000000 ? 'compact' : 'standard'
-    }).format(value);
-  };
+// Helper functions
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+    notation: Math.abs(value) >= 1000000 ? 'compact' : 'standard'
+  }).format(value);
+};
 
-  const formatDate = (date: Date | string) => {
-    const d = typeof date === 'string' ? new Date(date) : date;
-    return d.toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Policy Analysis Report</Text>
-          <Text style={styles.subtitle}>
-            Isle of Man Vehicle Duty Policy Engine
-          </Text>
-          <Text style={styles.text}>
-            Scenario: {scenario.name}
-          </Text>
-          <Text style={styles.text}>
-            Generated: {formatDate(new Date())}
-          </Text>
-        </View>
-
-        {/* Executive Summary */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Executive Summary</Text>
-          <Text style={styles.text}>
-            {scenario.description || 'Analysis of proposed vehicle duty policy changes and their projected impact on revenue, fleet composition, and EV adoption targets.'}
-          </Text>
-        </View>
-
-        {/* Key Metrics */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key Financial Metrics</Text>
-          
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Total Revenue Change</Text>
-            <Text style={styles.metricValue}>
-              {formatCurrency(results.metrics.totalRevenueChange)}
-            </Text>
-          </View>
-
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>Peak Revenue Gap</Text>
-            <Text style={styles.metricValue}>
-              {formatCurrency(Math.abs(results.metrics.peakRevenueGap))}
-            </Text>
-          </View>
-
-          {results.revenue.breakEvenYear && (
-            <View style={styles.metricRow}>
-              <Text style={styles.metricLabel}>Break-even Year</Text>
-              <Text style={styles.metricValue}>
-                {results.revenue.breakEvenYear}
-              </Text>
-            </View>
-          )}
-
-          <View style={styles.metricRow}>
-            <Text style={styles.metricLabel}>2030 Target Achievement</Text>
-            <Text style={styles.metricValue}>
-              {results.impacts.meetsTargets ? 
-                `Yes (${results.metrics.targetAchievementYear})` : 
-                'Not Met'
-              }
-            </Text>
-          </View>
-        </View>
-
-        {/* Policy Parameters */}
-        {template !== 'executive' && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Policy Parameters</Text>
-            
-            <Text style={styles.text}>
-              Timeline: {scenario.parameters.timeline.startYear} - {scenario.parameters.timeline.endYear}
-            </Text>
-            
-            <Text style={styles.text}>
-              Adoption Model: {scenario.parameters.adoptionModel.type}
-            </Text>
-            
-            <Text style={styles.text}>
-              Price Elasticity: {scenario.parameters.adoptionModel.priceElasticity}
-            </Text>
-
-            <Text style={styles.text}>
-              2030 EV Target: {Object.values(scenario.parameters.adoptionModel.targetEVCount)[0]?.toLocaleString() || 'N/A'} vehicles
-            </Text>
-          </View>
-        )}
-
-        {/* Warnings and Risks */}
-        {results.metrics.peakRevenueGap > 1000000 && (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningText}>
-              ⚠️ CRITICAL: Revenue loss exceeds £1M annually. Consider policy adjustments.
-            </Text>
-          </View>
-        )}
-
-        {!results.impacts.meetsTargets && (
-          <View style={styles.warningBox}>
-            <Text style={styles.warningText}>
-              ⚠️ WARNING: Policy does not achieve 2030 EV adoption targets.
-            </Text>
-          </View>
-        )}
-
-        {/* Recommendations */}
-        {options.includeRecommendations && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recommendations</Text>
-            
-            {results.metrics.peakRevenueGap > 1000000 ? (
-              <Text style={styles.text}>
-                • Consider phased duty rate increases to reduce revenue shock
-              </Text>
-            ) : (
-              <Text style={styles.text}>
-                • Revenue impact is manageable within projected parameters
-              </Text>
-            )}
-
-            {!results.impacts.meetsTargets ? (
-              <Text style={styles.text}>
-                • Enhance EV incentives or adjust adoption curve assumptions
-              </Text>
-            ) : (
-              <Text style={styles.text}>
-                • Policy supports achievement of 2030 EV targets
-              </Text>
-            )}
-
-            <Text style={styles.text}>
-              • Monitor quarterly adoption rates against projections
-            </Text>
-            
-            <Text style={styles.text}>
-              • Consider implementing progressive duty mechanisms based on vehicle weight or usage
-            </Text>
-          </View>
-        )}
-
-        {/* Footer */}
-        <Text style={styles.footer}>
-          Generated by Isle of Man Vehicle Duty Policy Engine | Confidential
-        </Text>
-      </Page>
-    </Document>
-  );
+const formatDate = (date: Date | string) => {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  return d.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
 export async function POST(request: NextRequest) {
@@ -300,13 +146,51 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(scenario.createdAt)
     } as ScenarioConfig;
 
-    // Generate PDF
-    const doc = React.createElement(PolicyReport, {
-      scenario: processedScenario,
-      results: results as ScenarioResults,
-      template,
-      options
-    });
+    // Generate PDF using React.createElement
+    const doc = React.createElement(
+      Document,
+      {},
+      React.createElement(
+        Page,
+        { size: 'A4', style: styles.page },
+        // Header
+        React.createElement(
+          View,
+          { style: styles.header },
+          React.createElement(Text, { style: styles.title }, 'Policy Analysis Report'),
+          React.createElement(Text, { style: styles.subtitle }, 'Isle of Man Vehicle Duty Policy Engine'),
+          React.createElement(Text, { style: styles.text }, `Scenario: ${processedScenario.name}`),
+          React.createElement(Text, { style: styles.text }, `Generated: ${formatDate(new Date())}`)
+        ),
+        // Executive Summary
+        React.createElement(
+          View,
+          { style: styles.section },
+          React.createElement(Text, { style: styles.sectionTitle }, 'Executive Summary'),
+          React.createElement(Text, { style: styles.text }, processedScenario.description || 'Analysis of proposed vehicle duty policy changes.')
+        ),
+        // Key Metrics
+        React.createElement(
+          View,
+          { style: styles.section },
+          React.createElement(Text, { style: styles.sectionTitle }, 'Key Financial Metrics'),
+          React.createElement(
+            View,
+            { style: styles.metricRow },
+            React.createElement(Text, { style: styles.metricLabel }, 'Total Revenue Change'),
+            React.createElement(Text, { style: styles.metricValue }, formatCurrency(results.metrics.totalRevenueChange))
+          ),
+          React.createElement(
+            View,
+            { style: styles.metricRow },
+            React.createElement(Text, { style: styles.metricLabel }, 'Peak Revenue Gap'),
+            React.createElement(Text, { style: styles.metricValue }, formatCurrency(Math.abs(results.metrics.peakRevenueGap)))
+          )
+        ),
+        // Footer
+        React.createElement(Text, { style: styles.footer }, 'Generated by Isle of Man Vehicle Duty Policy Engine | Confidential')
+      )
+    );
 
     const pdfBuffer = await pdf(doc).toBuffer();
 
