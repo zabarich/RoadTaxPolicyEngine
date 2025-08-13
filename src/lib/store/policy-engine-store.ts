@@ -29,6 +29,7 @@ interface PolicyEngineStore {
   setYearRange: (range: [number, number]) => void;
   exportToPDF: (template?: 'executive' | 'detailed' | 'technical') => Promise<void>;
   exportToCSV: () => void;
+  downloadScenario: () => void;
 }
 
 // Create default scenario
@@ -555,6 +556,34 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  },
+
+  downloadScenario: () => {
+    const { currentScenario, results } = get();
+    
+    const scenarioData = {
+      scenario: {
+        ...currentScenario,
+        exportedAt: new Date().toISOString()
+      },
+      results: results,
+      metadata: {
+        version: '1.0',
+        exportedBy: 'IOM Policy Engine',
+        description: 'Complete scenario configuration and results for import/sharing'
+      }
+    };
+
+    // Download as JSON file
+    const blob = new Blob([JSON.stringify(scenarioData, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `scenario_${currentScenario.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   }
 }));
 

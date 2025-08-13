@@ -27,7 +27,8 @@ export default function ModelPage() {
     resetToBaseline,
     saveScenario,
     exportToPDF,
-    exportToCSV
+    exportToCSV,
+    downloadScenario
   } = usePolicyEngineStore();
 
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -262,6 +263,16 @@ export default function ModelPage() {
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Export CSV Data
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          className="w-full" 
+                          size="sm"
+                          onClick={() => downloadScenario()}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download Scenario
                         </Button>
                       </div>
                     </CardContent>
