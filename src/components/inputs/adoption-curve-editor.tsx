@@ -139,12 +139,54 @@ export function AdoptionCurveEditor({ className }: AdoptionCurveEditorProps) {
                 className="w-20 h-8 text-sm"
                 min={-1}
                 max={1}
-                step={0.1}
+                step={0.05}
               />
             </div>
           </div>
           <div className="text-xs text-muted-foreground">
-            How adoption responds to duty changes (-1.0 to 1.0)
+            <strong>Policy Assumption:</strong> How much duty changes affect EV adoption
+          </div>
+          <div className="text-xs space-y-1">
+            <div>• <strong>0.0</strong> = Duty has no effect on adoption</div>
+            <div>• <strong>-0.1</strong> = Small effect (realistic for annual fees)</div>
+            <div>• <strong>-0.3</strong> = Large effect (like purchase price sensitivity)</div>
+          </div>
+        </div>
+
+        {/* Quick Elasticity Presets */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Common Assumptions</Label>
+          <div className="grid grid-cols-3 gap-1">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => updateScenarioParameter('parameters.adoptionModel.priceElasticity', 0)}
+              className="text-xs p-1"
+            >
+              No Effect
+              <br />
+              <span className="text-xs text-muted-foreground">(0.0)</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => updateScenarioParameter('parameters.adoptionModel.priceElasticity', -0.05)}
+              className="text-xs p-1"
+            >
+              Minimal
+              <br />
+              <span className="text-xs text-muted-foreground">(-0.05)</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => updateScenarioParameter('parameters.adoptionModel.priceElasticity', -0.3)}
+              className="text-xs p-1"
+            >
+              Strong
+              <br />
+              <span className="text-xs text-muted-foreground">(-0.3)</span>
+            </Button>
           </div>
         </div>
 

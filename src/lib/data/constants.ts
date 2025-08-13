@@ -27,7 +27,7 @@ export const constants: Constants = {
     "startYear": 2024,
     "endYear": 2035,
     "defaultProjectionYears": 10,
-    "defaultPriceElasticity": -0.3,
+    "defaultPriceElasticity": -0.05,
     "defaultAdoptionCurve": "sCurve",
     "inflectionPointYear": 2027
   },
