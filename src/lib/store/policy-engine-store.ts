@@ -587,26 +587,4 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
   }
 }));
 
-// Initialize saved scenarios from localStorage on app start
-if (typeof window !== 'undefined') {
-  try {
-          const savedScenarios = JSON.parse(localStorage.getItem('policyEngineScenarios') || '[]');
-      const summaries: ScenarioSummary[] = savedScenarios.map((scenario: ScenarioConfig) => ({
-      id: scenario.id,
-      name: scenario.name,
-      description: scenario.description,
-      createdAt: new Date(scenario.createdAt),
-      lastModified: new Date(scenario.createdAt),
-      keyMetrics: {
-        totalRevenueChange: 0, // Would need to recalculate
-        peakGap: 0,
-        targetYear: null
-      }
-    }));
-    
-    // Update the store with saved scenarios
-    usePolicyEngineStore.setState({ savedScenarios: summaries });
-  } catch (error) {
-    console.error('Failed to load scenarios from localStorage:', error);
-  }
-}
+// Note: Scenarios are loaded via fetchScenarios() when needed by components
