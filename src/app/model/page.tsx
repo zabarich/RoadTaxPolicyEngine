@@ -8,6 +8,7 @@ import { MetricCard } from '@/components/ui/metric-card';
 import { RevenueProjection } from '@/components/charts/revenue-projection';
 import { FleetComposition } from '@/components/charts/fleet-composition';
 import { DutyRateControls } from '@/components/inputs/duty-rate-controls';
+import { AdoptionCurveEditor } from '@/components/inputs/adoption-curve-editor';
 import { usePolicyEngineStore } from '@/lib/store/policy-engine-store';
 import { RevenueChartData, FleetChartData } from '@/lib/types';
 import { constants } from '@/lib/data/constants';
@@ -34,13 +35,19 @@ export default function ModelPage() {
   const getRevenueChartData = (): RevenueChartData[] => {
     if (!results) return [];
     
-    return Object.values(results.revenue.byYear).map(yearData => ({
-      year: yearData.year,
-      baseline: 15000000, // Simplified baseline
-      scenario: yearData.total,
-      ev: yearData.fromEV,
-      ice: yearData.fromICE
-    }));
+    return Object.values(results.revenue.byYear).map(yearData => {
+      // Calculate baseline revenue with natural EV growth decline
+      const baselineRevenue = yearData.year === 2024 ? 14702500 : 
+        14702500 * Math.pow(0.985, yearData.year - 2024); // 1.5% annual decline due to natural EV growth
+      
+      return {
+        year: yearData.year,
+        baseline: baselineRevenue,
+        scenario: yearData.total,
+        ev: yearData.fromEV,
+        ice: yearData.fromICE
+      };
+    });
   };
 
   const getFleetChartData = (): FleetChartData[] => {
@@ -140,28 +147,7 @@ export default function ModelPage() {
           <div className="lg:col-span-1 space-y-6">
             <DutyRateControls />
             
-            {/* Additional controls would go here */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Adoption Model</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-sm text-muted-foreground">
-                  Current: S-Curve model with 2030 target of 13,000 EVs
-                </div>
-                <div className="mt-4 space-y-2">
-                  <Button variant="outline" size="sm" className="w-full text-xs">
-                    Linear Growth
-                  </Button>
-                  <Button variant="outline" size="sm" className="w-full text-xs">
-                    Exponential Growth
-                  </Button>
-                  <Button size="sm" className="w-full text-xs">
-                    S-Curve (Current)
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <AdoptionCurveEditor />
 
             {/* Save/Export Actions */}
             <Card>

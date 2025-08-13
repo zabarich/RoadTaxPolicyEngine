@@ -21,27 +21,26 @@ export function DutyRateControls({ className }: DutyRateControlsProps) {
 
   const handleEVDutyChange = (values: number[]) => {
     const newValue = values[0];
-    updateScenarioParameter(
-      `parameters.dutyRates.ev.${constants.modelingDefaults.startYear}`, 
-      newValue
-    );
+    // Set the duty rate for all years from start to end
+    for (let year = constants.modelingDefaults.startYear; year <= constants.modelingDefaults.endYear; year++) {
+      updateScenarioParameter(`parameters.dutyRates.ev.${year}`, newValue);
+    }
   };
 
   const handleEVDutyInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = parseFloat(event.target.value) || 0;
     if (newValue >= 0 && newValue <= constants.financialConstants.maximumDuty) {
-      updateScenarioParameter(
-        `parameters.dutyRates.ev.${constants.modelingDefaults.startYear}`, 
-        newValue
-      );
+      // Set the duty rate for all years from start to end
+      for (let year = constants.modelingDefaults.startYear; year <= constants.modelingDefaults.endYear; year++) {
+        updateScenarioParameter(`parameters.dutyRates.ev.${year}`, newValue);
+      }
     }
   };
 
   const resetToBaseline = () => {
-    updateScenarioParameter(
-      `parameters.dutyRates.ev.${constants.modelingDefaults.startYear}`, 
-      constants.financialConstants.currentEVDuty
-    );
+    for (let year = constants.modelingDefaults.startYear; year <= constants.modelingDefaults.endYear; year++) {
+      updateScenarioParameter(`parameters.dutyRates.ev.${year}`, constants.financialConstants.currentEVDuty);
+    }
   };
 
   const currentICEDuty = constants.financialConstants.averageICEDuty;
@@ -150,7 +149,7 @@ export function DutyRateControls({ className }: DutyRateControlsProps) {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => handleEVDutyChange([currentICEDuty * 0.5])}
+              onClick={() => handleEVDutyChange([Math.round(currentICEDuty * 0.5)])}
               className="text-xs"
             >
               50% of ICE
@@ -158,7 +157,7 @@ export function DutyRateControls({ className }: DutyRateControlsProps) {
             <Button 
               variant="outline" 
               size="sm"
-              onClick={() => handleEVDutyChange([currentICEDuty * 0.75])}
+              onClick={() => handleEVDutyChange([Math.round(currentICEDuty * 0.75)])}
               className="text-xs"
             >
               75% of ICE

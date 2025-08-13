@@ -98,10 +98,12 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
     
     set({ currentScenario: updatedScenario });
     
-    // Auto-calculate if not currently calculating
-    if (!get().isCalculating) {
-      get().calculateResults();
-    }
+    // Trigger immediate recalculation
+    setTimeout(() => {
+      if (!get().isCalculating) {
+        get().calculateResults();
+      }
+    }, 0);
   },
 
   calculateResults: async () => {

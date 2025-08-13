@@ -234,10 +234,18 @@ export class RevenueCalculator {
   private calculateBaselineRevenue(year: number): number {
     // Baseline assumes current duty rates and natural EV growth without policy intervention
     const yearOffset = year - constants.modelingDefaults.startYear;
-    const naturalGrowthRate = constants.adoptionParameters.baselineGrowthRate;
     
+    if (yearOffset === 0) {
+      return this.baseline.revenueModel.currentAnnualRevenue;
+    }
+    
+    // Use more conservative baseline growth for EVs (annual percentage growth)
+    const naturalGrowthRate = 0.15; // 15% annual growth
     const currentEVs = this.baseline.fleet.currentComposition.ev;
-    const projectedEVs = currentEVs * Math.pow(1 + naturalGrowthRate, yearOffset);
+    const projectedEVs = Math.min(
+      currentEVs * Math.pow(1 + naturalGrowthRate, yearOffset),
+      this.baseline.fleet.totalVehicles * 0.8 // Cap at 80% of fleet
+    );
     const projectedICEs = this.baseline.fleet.totalVehicles - projectedEVs;
     
     return (projectedEVs * this.baseline.revenueModel.revenuePerEV) + 
@@ -245,7 +253,23 @@ export class RevenueCalculator {
   }
 
   private getEVDutyForYear(year: number, config: ScenarioConfig): number {
-    return config.parameters.dutyRates.ev[year] || this.baseline.revenueModel.revenuePerEV;
+    // Check if there's a specific rate for this year
+    if (config.parameters.dutyRates.ev[year] !== undefined) {
+      return config.parameters.dutyRates.ev[year];
+    }
+    
+    // Look for the most recent rate before this year
+    const availableYears = Object.keys(config.parameters.dutyRates.ev)
+      .map(Number)
+      .filter(y => y <= year)
+      .sort((a, b) => b - a);
+    
+    if (availableYears.length > 0) {
+      return config.parameters.dutyRates.ev[availableYears[0]];
+    }
+    
+    // Fallback to baseline
+    return this.baseline.revenueModel.revenuePerEV;
   }
 
   private getICEDutyForYear(_year: number, _config: ScenarioConfig): number {
