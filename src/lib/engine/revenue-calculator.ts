@@ -235,24 +235,24 @@ export class RevenueCalculator {
   }
 
   private calculateBaselineRevenue(year: number): number {
-    // Baseline assumes current duty rates and natural EV growth without policy intervention
+    // Baseline assumes CURRENT duty rates with natural EV growth (no policy changes)
     const yearOffset = year - constants.modelingDefaults.startYear;
     
     if (yearOffset === 0) {
       return this.baseline.revenueModel.currentAnnualRevenue;
     }
     
-    // Natural EV growth without policy intervention (more modest)
-    const naturalGrowthRate = 0.08; // 8% annual growth (more realistic)
+    // Natural EV growth without policy intervention - conservative estimate
+    const naturalGrowthRate = 0.05; // 5% annual growth (conservative)
     const currentEVs = this.baseline.fleet.currentComposition.ev;
     const projectedEVs = Math.min(
       currentEVs * Math.pow(1 + naturalGrowthRate, yearOffset),
-      this.baseline.fleet.totalVehicles * 0.25 // Cap at 25% of fleet naturally
+      this.baseline.fleet.totalVehicles * 0.15 // Cap at 15% naturally by 2035
     );
     const projectedICEs = this.baseline.fleet.totalVehicles - projectedEVs;
     
-    return (projectedEVs * this.baseline.revenueModel.revenuePerEV) + 
-           (projectedICEs * this.baseline.revenueModel.revenuePerICE);
+    // Use CURRENT duty rates for baseline (£65 EV, £230 ICE)
+    return (projectedEVs * 65) + (projectedICEs * 230);
   }
 
   private getEVDutyForYear(year: number, config: ScenarioConfig): number {

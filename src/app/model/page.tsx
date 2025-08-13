@@ -36,10 +36,22 @@ export default function ModelPage() {
     if (!results) return [];
     
     return Object.values(results.revenue.byYear).map(yearData => {
-      // Calculate baseline revenue with modest natural EV growth decline
+      // Calculate baseline revenue using the same logic as the calculator
       const yearOffset = yearData.year - 2024;
-      const baselineRevenue = yearData.year === 2024 ? 14702500 : 
-        14702500 * Math.pow(0.995, yearOffset); // 0.5% annual decline (much more modest)
+      let baselineRevenue: number;
+      
+      if (yearOffset === 0) {
+        baselineRevenue = 14702500;
+      } else {
+        // Natural EV growth with current duty rates (5% annual growth, cap at 15%)
+        const currentEVs = 1500;
+        const projectedEVs = Math.min(
+          currentEVs * Math.pow(1.05, yearOffset),
+          65000 * 0.15
+        );
+        const projectedICEs = 65000 - projectedEVs;
+        baselineRevenue = (projectedEVs * 65) + (projectedICEs * 230);
+      }
       
       return {
         year: yearData.year,
@@ -87,11 +99,13 @@ export default function ModelPage() {
         severity: (finalRevenue?.total || 0) < 14000000 ? 'error' as const : 'success' as const
       },
       {
-        title: 'Peak Revenue Gap',
+        title: 'Peak Revenue Impact',
         value: Math.abs(results.metrics.peakRevenueGap),
         format: 'currency' as const,
-        trend: 'down' as const,
-        severity: Math.abs(results.metrics.peakRevenueGap) > 1000000 ? 'error' as const : 'warning' as const
+        change: -results.metrics.peakRevenueGap, // Negative gap = positive impact
+        trend: results.metrics.peakRevenueGap < 0 ? 'up' as const : 'down' as const,
+        severity: results.metrics.peakRevenueGap > 1000000 ? 'error' as const : 
+                 results.metrics.peakRevenueGap < -500000 ? 'success' as const : 'warning' as const
       },
       {
         title: 'Target Achievement',
