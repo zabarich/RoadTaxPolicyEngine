@@ -6,21 +6,13 @@ import { join } from 'path';
 const SCENARIOS_FILE = join(process.cwd(), 'data', 'scenarios.json');
 
 async function getScenarios(): Promise<ScenarioConfig[]> {
-  try {
-    const data = await readFile(SCENARIOS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    return [];
-  }
+  // Always return empty - scenarios handled client-side
+  return [];
 }
 
 async function saveScenarios(scenarios: ScenarioConfig[]): Promise<void> {
-  try {
-    await writeFile(SCENARIOS_FILE, JSON.stringify(scenarios, null, 2));
-  } catch (error) {
-    console.error('Failed to save scenarios:', error);
-    throw new Error('Failed to save scenarios');
-  }
+  // No-op - scenarios saved client-side only
+  throw new Error('Server-side storage disabled - using localStorage');
 }
 
 // GET /api/scenarios/[id] - Get specific scenario

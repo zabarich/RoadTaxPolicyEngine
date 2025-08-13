@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import React from 'react';
-import { ScenarioConfig } from '@/lib/types';
+import { ScenarioConfig, YearRevenue } from '@/lib/types';
 
 // Validation schema for PDF export request
 const ExportPDFSchema = z.object({
@@ -104,6 +104,28 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 8,
     color: '#9ca3af'
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    paddingBottom: 5,
+    marginBottom: 5
+  },
+  tableHeaderText: {
+    flex: 1,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#374151'
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 3
+  },
+  tableText: {
+    flex: 1,
+    fontSize: 9,
+    color: '#6b7280'
   }
 });
 
@@ -172,9 +194,11 @@ export async function POST(request: NextRequest) {
           View,
           { style: styles.section },
           React.createElement(Text, { style: styles.sectionTitle }, 'Executive Summary'),
-          React.createElement(Text, { style: styles.text }, processedScenario.description || 'Analysis of proposed vehicle duty policy changes.')
+          React.createElement(Text, { style: styles.text }, processedScenario.description || 'Analysis of proposed vehicle duty policy changes for the Isle of Man Government.'),
+          React.createElement(Text, { style: styles.text }, `This analysis evaluates the fiscal impact of the "${processedScenario.name}" policy scenario on vehicle duty revenue as electric vehicle adoption increases.`)
         ),
-        // Key Metrics
+        
+        // Key Financial Metrics
         React.createElement(
           View,
           { style: styles.section },
@@ -190,7 +214,70 @@ export async function POST(request: NextRequest) {
             { style: styles.metricRow },
             React.createElement(Text, { style: styles.metricLabel }, 'Peak Revenue Gap'),
             React.createElement(Text, { style: styles.metricValue }, formatCurrency(Math.abs(results.metrics.peakRevenueGap)))
+          ),
+          React.createElement(
+            View,
+            { style: styles.metricRow },
+            React.createElement(Text, { style: styles.metricLabel }, 'Target Achievement'),
+            React.createElement(Text, { style: styles.metricValue }, results.metrics.targetAchievementYear ? `Year ${results.metrics.targetAchievementYear}` : 'Not Met')
+          ),
+          React.createElement(
+            View,
+            { style: styles.metricRow },
+            React.createElement(Text, { style: styles.metricLabel }, 'Break-even Year'),
+            React.createElement(Text, { style: styles.metricValue }, results.revenue.breakEvenYear ? `Year ${results.revenue.breakEvenYear}` : 'Not Achieved')
           )
+        ),
+
+        // Policy Analysis
+        React.createElement(
+          View,
+          { style: styles.section },
+          React.createElement(Text, { style: styles.sectionTitle }, 'Policy Analysis'),
+          React.createElement(Text, { style: styles.text }, `Current EV Duty Rate: £${processedScenario.parameters.dutyRates.ev[2024] || 65} annually`),
+          React.createElement(Text, { style: styles.text }, `2030 EV Target: ${processedScenario.parameters.adoptionModel.targetEVCount[2030] || 13000} vehicles`),
+          React.createElement(Text, { style: styles.text }, `Policy Impact: ${results.impacts.meetsTargets ? 'Successfully meets government EV targets' : 'Falls short of government EV adoption targets'}`),
+          React.createElement(Text, { style: styles.text }, `Revenue Impact: ${results.metrics.totalRevenueChange >= 0 ? 'Positive' : 'Negative'} £${Math.abs(results.metrics.totalRevenueChange).toLocaleString()} over policy period`)
+        ),
+
+        // Year-by-Year Projections (sample years)
+        React.createElement(
+          View,
+          { style: styles.section },
+          React.createElement(Text, { style: styles.sectionTitle }, 'Revenue Projections (Key Years)'),
+          React.createElement(
+            View,
+            { style: styles.tableHeader },
+            React.createElement(Text, { style: styles.tableHeaderText }, 'Year'),
+            React.createElement(Text, { style: styles.tableHeaderText }, 'EV Count'),
+            React.createElement(Text, { style: styles.tableHeaderText }, 'Revenue'),
+            React.createElement(Text, { style: styles.tableHeaderText }, 'Gap')
+          ),
+          // Show projections for key years
+          ...Object.entries(results.revenue.byYear)
+            .filter(([year]) => [2024, 2027, 2030].includes(parseInt(year)))
+            .map(([year, data]) => {
+              const yearData = data as YearRevenue; // Type assertion for revenue data
+              return React.createElement(
+                View,
+                { style: styles.tableRow, key: year },
+                React.createElement(Text, { style: styles.tableText }, year),
+                React.createElement(Text, { style: styles.tableText }, results.fleet.compositionByYear[parseInt(year)]?.ev.toLocaleString() || 'N/A'),
+                React.createElement(Text, { style: styles.tableText }, formatCurrency(yearData.total)),
+                React.createElement(Text, { style: styles.tableText }, formatCurrency(results.impacts.revenueGap[parseInt(year)] || 0))
+              );
+            })
+        ),
+
+        // Recommendations
+        React.createElement(
+          View,
+          { style: styles.section },
+          React.createElement(Text, { style: styles.sectionTitle }, 'Policy Recommendations'),
+          React.createElement(Text, { style: styles.text }, '• Monitor EV adoption rates quarterly against projections'),
+          React.createElement(Text, { style: styles.text }, '• Consider graduated duty adjustments if revenue targets are not met'),
+          React.createElement(Text, { style: styles.text }, '• Review charging infrastructure development to support adoption targets'),
+          React.createElement(Text, { style: styles.text }, `• ${results.impacts.meetsTargets ? 'Current policy supports government EV targets' : 'Consider policy adjustments to meet 2030 EV targets'}`)
         ),
         // Footer
         React.createElement(Text, { style: styles.footer }, 'Generated by Isle of Man Vehicle Duty Policy Engine | Confidential')

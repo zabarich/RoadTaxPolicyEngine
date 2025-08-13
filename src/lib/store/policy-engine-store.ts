@@ -485,10 +485,42 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
       throw new Error('No results available for export');
     }
     
-    // Prepare CSV data
-    const headers = ['Year', 'Total Revenue', 'EV Revenue', 'ICE Revenue', 'EV Count', 'ICE Count', 'EV Percentage'];
+    // Scenario metadata
+    const scenarioInfo = [
+      ['Scenario Name', currentScenario.name],
+      ['Description', currentScenario.description],
+      ['Generated', new Date().toISOString()],
+      ['EV Target 2030', currentScenario.parameters.adoptionModel.targetEVCount[2030] || 13000],
+      ['Current EV Duty', currentScenario.parameters.dutyRates.ev[2024] || 65],
+      ['Target Achievement', results.metrics.targetAchievementYear || 'Not Met'],
+      ['Break-even Year', results.revenue.breakEvenYear || 'Not Achieved'],
+      ['Total Revenue Change', results.metrics.totalRevenueChange],
+      ['Peak Revenue Gap', results.metrics.peakRevenueGap],
+      ['']
+    ];
+    
+    // Year-by-year data headers
+    const headers = [
+      'Year', 
+      'Total Revenue (£)', 
+      'EV Revenue (£)', 
+      'ICE Revenue (£)', 
+      'EV Count', 
+      'ICE Count', 
+      'EV Percentage (%)',
+      'Revenue Gap (£)',
+      'EV Duty Rate (£)',
+      'Meets Target'
+    ];
+    
+    // Year-by-year data rows
     const rows = Object.values(results.revenue.byYear).map(yearData => {
       const fleetData = results.fleet.compositionByYear[yearData.year];
+      const evDuty = currentScenario.parameters.dutyRates.ev[yearData.year] || 
+                    currentScenario.parameters.dutyRates.ev[2024] || 65;
+      const target = currentScenario.parameters.adoptionModel.targetEVCount[2030] || 13000;
+      const meetsTarget = (fleetData?.ev || 0) >= target ? 'Yes' : 'No';
+      
       return [
         yearData.year,
         yearData.total,
@@ -496,12 +528,19 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
         yearData.fromICE,
         fleetData?.ev || 0,
         fleetData?.ice || 0,
-        fleetData?.evPercentage || 0
+        (fleetData?.evPercentage || 0).toFixed(1),
+        results.impacts.revenueGap[yearData.year] || 0,
+        evDuty,
+        meetsTarget
       ];
     });
     
-    // Convert to CSV
+    // Convert to CSV with scenario info at top
     const csvContent = [
+      // Scenario metadata section
+      '# Scenario Information',
+      ...scenarioInfo.map(row => row.join(',')),
+      '# Year-by-Year Projections',
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\n');
@@ -511,7 +550,7 @@ export const usePolicyEngineStore = create<PolicyEngineStore>((set, get) => ({
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `policy_data_${currentScenario.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `policy_analysis_${currentScenario.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);

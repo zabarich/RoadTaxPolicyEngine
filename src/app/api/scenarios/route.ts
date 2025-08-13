@@ -42,23 +42,15 @@ const CreateScenarioSchema = z.object({
   })
 });
 
+// Removed file system operations - using localStorage only
 async function getScenarios(): Promise<ScenarioConfig[]> {
-  try {
-    const data = await readFile(SCENARIOS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    // File doesn't exist or is invalid, return empty array
-    return [];
-  }
+  // Always return empty array - scenarios handled client-side
+  return [];
 }
 
 async function saveScenarios(scenarios: ScenarioConfig[]): Promise<void> {
-  try {
-    await writeFile(SCENARIOS_FILE, JSON.stringify(scenarios, null, 2));
-  } catch (error) {
-    console.error('Failed to save scenarios:', error);
-    throw new Error('Failed to save scenarios');
-  }
+  // No-op - scenarios saved client-side only
+  throw new Error('Server-side storage disabled - using localStorage');
 }
 
 // GET /api/scenarios - List all scenarios
@@ -104,7 +96,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/scenarios - Create new scenario
+// POST /api/scenarios - Create new scenario (localStorage only)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -123,7 +115,7 @@ export async function POST(request: NextRequest) {
 
     const { name, description, parameters } = validation.data;
 
-    // Create new scenario
+    // Create new scenario (but don't save server-side)
     const newScenario: ScenarioConfig = {
       id: `scenario_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
@@ -153,20 +145,16 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    // Load existing scenarios and add new one
-    const scenarios = await getScenarios();
-    scenarios.push(newScenario);
-    await saveScenarios(scenarios);
-
+    // Return scenario but don't save server-side (client will save to localStorage)
     return NextResponse.json({
       scenario: newScenario,
-      message: 'Scenario created successfully'
+      message: 'Scenario created successfully (stored client-side)'
     }, { status: 201 });
 
   } catch (error) {
     console.error('Error creating scenario:', error);
     return NextResponse.json(
-      { error: 'Failed to create scenario' },
+      { error: 'Failed to create scenario - will fall back to localStorage' },
       { status: 500 }
     );
   }
