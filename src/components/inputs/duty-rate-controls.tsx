@@ -220,14 +220,22 @@ function CategoryAdjustmentSection() {
     if (!currentScenario.parameters.categoryAdjustments) return null;
     
     const parts = path.split('.');
-    let adjustments: any = currentScenario.parameters.categoryAdjustments;
+    const categoryAdjustments = currentScenario.parameters.categoryAdjustments;
     
-    for (const part of parts) {
-      adjustments = adjustments?.[part];
-      if (!adjustments) return null;
+    if (parts.length === 1) {
+      const category = parts[0] as keyof typeof categoryAdjustments;
+      const adjustments = categoryAdjustments[category] as Record<number, CategoryAdjustment>;
+      return adjustments?.[year] || null;
+    } else if (parts.length === 2) {
+      const [mainCategory, subCategory] = parts;
+      const mainAdjustments = categoryAdjustments[mainCategory as keyof typeof categoryAdjustments];
+      if (typeof mainAdjustments === 'object' && mainAdjustments && 'light' in mainAdjustments) {
+        const subAdjustments = (mainAdjustments as Record<string, Record<number, CategoryAdjustment>>)[subCategory];
+        return subAdjustments?.[year] || null;
+      }
     }
     
-    return adjustments[year] || null;
+    return null;
   };
 
   const calculateAdjustedRate = (baseRate: number, adjustment: CategoryAdjustment | null) => {

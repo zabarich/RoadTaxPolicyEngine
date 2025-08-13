@@ -1,4 +1,4 @@
-import { BaselineData, ScenarioConfig, ScenarioResults, YearRevenue, FleetComposition } from '@/lib/types';
+import { BaselineData, ScenarioConfig, ScenarioResults, YearRevenue, FleetComposition, CategoryAdjustment } from '@/lib/types';
 import { constants } from '@/lib/data/constants';
 
 export class RevenueCalculator {
@@ -320,7 +320,7 @@ export class RevenueCalculator {
   }
 
   // Category adjustment helper methods
-  private getActiveAdjustment(year: number, adjustments: Record<number, any>): any | null {
+  private getActiveAdjustment(year: number, adjustments: Record<number, CategoryAdjustment>): CategoryAdjustment | null {
     const applicableYears = Object.keys(adjustments)
       .map(Number)
       .filter(adjYear => {
@@ -332,7 +332,7 @@ export class RevenueCalculator {
     return applicableYears.length > 0 ? adjustments[applicableYears[0]] : null;
   }
 
-  private applyAdjustment(baseRate: number, adjustment: any): number {
+  private applyAdjustment(baseRate: number, adjustment: CategoryAdjustment | null): number {
     if (!adjustment) return baseRate;
 
     switch (adjustment.type) {
