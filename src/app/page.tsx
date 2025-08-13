@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricCard } from '@/components/ui/metric-card';
 import { baselineData, currentSituation } from '@/lib/data/baseline-data';
-import { BarChart3, AlertTriangle, Target, ArrowRight } from 'lucide-react';
+import { BarChart3, AlertTriangle, Target, ArrowRight, Database } from 'lucide-react';
 
 export default function HomePage() {
   // Calculate key metrics for the dashboard
@@ -192,7 +192,7 @@ export default function HomePage() {
 
         {/* Quick Actions */}
         <div className="text-center">
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             <Card className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg">Start Modeling</CardTitle>
@@ -243,13 +243,36 @@ export default function HomePage() {
                 </Link>
               </CardContent>
             </Card>
+
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Data Sources
+                </CardTitle>
+                <CardDescription>
+                  View source data and provenance for transparency
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Link href="/data-sources">
+                  <Button variant="outline" className="w-full" size="lg">
+                    View Data Sources
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
           </div>
         </div>
 
         {/* Footer Info */}
         <div className="mt-12 pt-8 border-t text-center text-sm text-gray-600 dark:text-gray-400">
           <p>
-            Data sources: {baselineData.metadata.sources.join(', ')} | 
+            <Link href="/data-sources" className="hover:text-blue-600 dark:hover:text-blue-400 underline">
+              Data sources
+            </Link>
+            : {baselineData.metadata.sources.join(', ')} | 
             Last updated: {baselineData.metadata.lastUpdated}
           </p>
         </div>
