@@ -162,15 +162,18 @@ export class RevenueCalculator {
   private sCurveAdoption(base: number, target: number, yearOffset: number, totalYears: number): number {
     if (yearOffset === 0) return base;
     
-    // S-curve parameters
-    const k = 0.5; // Growth rate parameter
-    const midpoint = totalYears / 2;
+    // S-curve parameters - more realistic adoption curve
+    const k = 0.8; // Steeper growth rate
+    const midpoint = totalYears * 0.6; // Shift curve slightly right (slower start)
     
     // Logistic function
-    const t = (yearOffset - midpoint) / (totalYears / 4);
+    const t = (yearOffset - midpoint) / (totalYears / 3);
     const logistic = 1 / (1 + Math.exp(-k * t));
     
-    return base + (target - base) * logistic;
+    const result = base + (target - base) * logistic;
+    
+    // Ensure we don't exceed total vehicle count
+    return Math.min(result, this.baseline.fleet.totalVehicles * 0.95);
   }
 
   private customAdoption(yearOffset: number, targetCounts: Record<number, number>, startYear: number): number {
@@ -239,12 +242,12 @@ export class RevenueCalculator {
       return this.baseline.revenueModel.currentAnnualRevenue;
     }
     
-    // Use more conservative baseline growth for EVs (annual percentage growth)
-    const naturalGrowthRate = 0.15; // 15% annual growth
+    // Natural EV growth without policy intervention (more modest)
+    const naturalGrowthRate = 0.08; // 8% annual growth (more realistic)
     const currentEVs = this.baseline.fleet.currentComposition.ev;
     const projectedEVs = Math.min(
       currentEVs * Math.pow(1 + naturalGrowthRate, yearOffset),
-      this.baseline.fleet.totalVehicles * 0.8 // Cap at 80% of fleet
+      this.baseline.fleet.totalVehicles * 0.25 // Cap at 25% of fleet naturally
     );
     const projectedICEs = this.baseline.fleet.totalVehicles - projectedEVs;
     

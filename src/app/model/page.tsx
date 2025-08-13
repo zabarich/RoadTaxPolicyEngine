@@ -36,9 +36,10 @@ export default function ModelPage() {
     if (!results) return [];
     
     return Object.values(results.revenue.byYear).map(yearData => {
-      // Calculate baseline revenue with natural EV growth decline
+      // Calculate baseline revenue with modest natural EV growth decline
+      const yearOffset = yearData.year - 2024;
       const baselineRevenue = yearData.year === 2024 ? 14702500 : 
-        14702500 * Math.pow(0.985, yearData.year - 2024); // 1.5% annual decline due to natural EV growth
+        14702500 * Math.pow(0.995, yearOffset); // 0.5% annual decline (much more modest)
       
       return {
         year: yearData.year,
