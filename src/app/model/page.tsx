@@ -259,13 +259,24 @@ export default function ModelPage() {
                 <div className="space-y-3 text-sm">
                   {results && (
                     <>
-                      {results.metrics.peakRevenueGap < -1000000 && (
+                      {results.metrics.peakRevenueGap > 1000000 && (
                         <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border-l-4 border-red-500">
                           <div className="font-medium text-red-700 dark:text-red-300">
                             Critical Revenue Loss
                           </div>
                           <div className="text-red-600 dark:text-red-400">
-                            Peak gap exceeds £1M annually
+                            Peak loss exceeds £1M annually
+                          </div>
+                        </div>
+                      )}
+                      
+                      {results.metrics.peakRevenueGap < -1000000 && (
+                        <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500">
+                          <div className="font-medium text-green-700 dark:text-green-300">
+                            Significant Revenue Gain
+                          </div>
+                          <div className="text-green-600 dark:text-green-400">
+                            Peak gain exceeds £1M annually
                           </div>
                         </div>
                       )}
