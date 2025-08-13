@@ -79,11 +79,12 @@ export class RevenueCalculator {
     results.metrics.totalRevenueChange = cumulativeImpact;
     results.metrics.peakRevenueGap = peakGap;
     
-    // Check if targets are met
-    const finalYear = timeline.endYear;
-    const finalFleet = results.fleet.compositionByYear[finalYear];
-    const targetEVCount = this.baseline.fleet.projections.governmentTarget2030;
-    results.impacts.meetsTargets = finalFleet.ev >= targetEVCount;
+    // Check if targets are met - use 2030 specifically for government target
+    const targetYear = 2030;
+    const targetFleet = results.fleet.compositionByYear[targetYear];
+    const targetEVCount = config.parameters.adoptionModel.targetEVCount[2030] || 
+                         this.baseline.fleet.projections.governmentTarget2030;
+    results.impacts.meetsTargets = targetFleet && targetFleet.ev >= targetEVCount;
     
     if (results.impacts.meetsTargets) {
       // Find when target was achieved
@@ -127,25 +128,54 @@ export class RevenueCalculator {
     const totalYears = targetYear - config.parameters.timeline.startYear;
     
     // Get target for final year or use default projection
-    const finalTarget = adoptionModel.targetEVCount[targetYear] || 
-                       this.baseline.fleet.projections.governmentTarget2030;
+    const baseTarget = adoptionModel.targetEVCount[targetYear] || 
+                      adoptionModel.targetEVCount[2030] || 
+                      this.baseline.fleet.projections.governmentTarget2030;
 
+    // Apply price elasticity effect
+    const currentYear = config.parameters.timeline.startYear + yearOffset;
+    const evDuty = this.getEVDutyForYear(currentYear, config);
+    const iceDuty = this.getICEDutyForYear(currentYear, config);
+    const baselineEVDuty = 65; // Current EV duty
+    
+    // Calculate price effect: higher EV duty = less adoption (negative elasticity)
+    const priceRatio = evDuty / baselineEVDuty;
+    const elasticity = adoptionModel.priceElasticity || -0.3;
+    const priceEffect = Math.pow(priceRatio, elasticity);
+    
+    // With negative elasticity: 
+    // - If EV duty increases (ratio > 1), priceEffect < 1 (less adoption)
+    // - If EV duty decreases (ratio < 1), priceEffect > 1 (more adoption)
+    
+    // Apply price effect to target
+    const adjustedTarget = Math.min(
+      baseTarget * priceEffect,
+      this.baseline.fleet.totalVehicles * 0.9 // Cap at 90% of fleet
+    );
+
+    let baseAdoption: number;
     switch (adoptionModel.type) {
       case 'linear':
-        return this.linearAdoption(baseEVCount, finalTarget, yearOffset, totalYears);
+        baseAdoption = this.linearAdoption(baseEVCount, adjustedTarget, yearOffset, totalYears);
+        break;
       
       case 'exponential':
-        return this.exponentialAdoption(baseEVCount, finalTarget, yearOffset, totalYears);
+        baseAdoption = this.exponentialAdoption(baseEVCount, adjustedTarget, yearOffset, totalYears);
+        break;
       
       case 'sCurve':
-        return this.sCurveAdoption(baseEVCount, finalTarget, yearOffset, totalYears);
+        baseAdoption = this.sCurveAdoption(baseEVCount, adjustedTarget, yearOffset, totalYears);
+        break;
       
       case 'custom':
-        return this.customAdoption(yearOffset, adoptionModel.targetEVCount, config.parameters.timeline.startYear);
+        baseAdoption = this.customAdoption(yearOffset, adoptionModel.targetEVCount, config.parameters.timeline.startYear);
+        break;
       
       default:
-        return this.sCurveAdoption(baseEVCount, finalTarget, yearOffset, totalYears);
+        baseAdoption = this.sCurveAdoption(baseEVCount, adjustedTarget, yearOffset, totalYears);
     }
+
+    return Math.max(baseEVCount, Math.min(baseAdoption, this.baseline.fleet.totalVehicles));
   }
 
   private linearAdoption(base: number, target: number, yearOffset: number, totalYears: number): number {
