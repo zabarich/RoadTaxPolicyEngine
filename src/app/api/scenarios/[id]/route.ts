@@ -26,11 +26,12 @@ async function saveScenarios(scenarios: ScenarioConfig[]): Promise<void> {
 // GET /api/scenarios/[id] - Get specific scenario
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const scenarios = await getScenarios();
-    const scenario = scenarios.find(s => s.id === params.id);
+    const scenario = scenarios.find(s => s.id === id);
 
     if (!scenario) {
       return NextResponse.json(
@@ -55,12 +56,13 @@ export async function GET(
 // PUT /api/scenarios/[id] - Update specific scenario
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const scenarios = await getScenarios();
-    const scenarioIndex = scenarios.findIndex(s => s.id === params.id);
+    const scenarioIndex = scenarios.findIndex(s => s.id === id);
 
     if (scenarioIndex === -1) {
       return NextResponse.json(
@@ -73,7 +75,7 @@ export async function PUT(
     scenarios[scenarioIndex] = {
       ...scenarios[scenarioIndex],
       ...body,
-      id: params.id, // Ensure ID doesn't change
+      id: id, // Ensure ID doesn't change
       lastModified: new Date()
     };
 
@@ -96,11 +98,12 @@ export async function PUT(
 // DELETE /api/scenarios/[id] - Delete specific scenario
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const scenarios = await getScenarios();
-    const scenarioIndex = scenarios.findIndex(s => s.id === params.id);
+    const scenarioIndex = scenarios.findIndex(s => s.id === id);
 
     if (scenarioIndex === -1) {
       return NextResponse.json(

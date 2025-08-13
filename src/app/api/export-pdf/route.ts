@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
 import React from 'react';
+import { ScenarioConfig } from '@/lib/types';
 
 // Validation schema for PDF export request
 const ExportPDFSchema = z.object({
@@ -18,7 +19,11 @@ const ExportPDFSchema = z.object({
     includeCharts: z.boolean().default(false),
     includeAssumptions: z.boolean().default(true),
     includeRecommendations: z.boolean().default(true)
-  }).optional().default({})
+  }).optional().default(() => ({
+    includeCharts: false,
+    includeAssumptions: true,
+    includeRecommendations: true
+  }))
 });
 
 // PDF Styles
@@ -192,10 +197,10 @@ export async function POST(request: NextRequest) {
       )
     );
 
-    const pdfBuffer = await pdf(doc).toBuffer();
+    const pdfBlob = await pdf(doc).toBlob();
 
     // Return PDF as response
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(pdfBlob, {
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="policy_report_${scenario.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf"`
