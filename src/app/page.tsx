@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MetricCard } from '@/components/ui/metric-card';
 import { baselineData, currentSituation } from '@/lib/data/baseline-data';
 import { BarChart3, AlertTriangle, Target, ArrowRight, Database } from 'lucide-react';
+import { HeaderWithLogout } from '@/components/header-with-logout';
 
 export default function HomePage() {
   // Calculate key metrics for the dashboard
@@ -40,6 +43,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <HeaderWithLogout />
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
