@@ -199,12 +199,29 @@ function CategoryAdjustmentSection() {
     { id: 'agricultural', name: 'Agricultural', baseRate: 65, path: 'specialCategories.agricultural' }
   ];
 
-  const setAdjustment = (path: string, year: number, type: CategoryAdjustment['type'], value: number) => {
+  const setAdjustment = (path: string, year: number, value: number) => {
+    // Determine adjustment type based on value
+    let type: CategoryAdjustment['type'];
+    let adjustmentValue: number;
+    
+    if (value === 0) {
+      // Remove adjustment if slider is at 0
+      const parameterPath = `parameters.categoryAdjustments.${path}.${year}`;
+      updateScenarioParameter(parameterPath, undefined);
+      return;
+    } else if (value > 0) {
+      type = 'lift';
+      adjustmentValue = value;
+    } else {
+      type = 'reduce';
+      adjustmentValue = Math.abs(value);
+    }
+    
     const adjustment: CategoryAdjustment = {
       type,
-      value,
+      value: adjustmentValue,
       startYear: year,
-      description: `${type === 'lift' ? 'Increase' : type === 'reduce' ? 'Decrease' : 'Hold'} for ${year}`
+      description: `${type === 'lift' ? 'Increase' : 'Decrease'} by ${adjustmentValue}% for ${year}`
     };
     
     const parameterPath = `parameters.categoryAdjustments.${path}.${year}`;
@@ -255,21 +272,24 @@ function CategoryAdjustmentSection() {
     }
   };
 
-  const getAdjustmentDisplay = (adjustment: CategoryAdjustment | null) => {
-    if (!adjustment) return 'Base Rate';
+  const getAdjustmentValue = (adjustment: CategoryAdjustment | null): number => {
+    if (!adjustment) return 0;
     
     switch (adjustment.type) {
       case 'lift':
-        return `+${adjustment.value}%`;
+        return adjustment.value;
       case 'reduce':
-        return `-${adjustment.value}%`;
+        return -adjustment.value;
       case 'hold':
-        return 'Hold';
-      case 'absolute':
-        return `£${adjustment.value}`;
+        return 0;
       default:
-        return 'Base Rate';
+        return 0;
     }
+  };
+
+  const getAdjustmentDisplay = (value: number) => {
+    if (value === 0) return 'Base Rate';
+    return value > 0 ? `+${value}%` : `${value}%`;
   };
 
   return (
@@ -309,75 +329,105 @@ function CategoryAdjustmentSection() {
           </div>
 
           {/* Category Controls */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Label className="text-xs font-medium">Vehicle Categories</Label>
             {categories.map((category) => {
               const adjustment = getAdjustment(category.path, selectedYear);
+              const currentValue = getAdjustmentValue(adjustment);
               const adjustedRate = calculateAdjustedRate(category.baseRate, adjustment);
-              const hasAdjustment = !!adjustment;
+              const hasAdjustment = currentValue !== 0;
               
               return (
-                <div key={category.id} className="grid grid-cols-4 gap-2 items-center text-xs p-2 rounded border">
-                  {/* Category Name */}
-                  <div className="font-medium">{category.name}</div>
-                  
-                  {/* Action Buttons */}
-                  <div className="flex gap-1">
-                    <Button
-                      variant={adjustment?.type === 'reduce' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => {
-                        if (adjustment?.type === 'reduce') {
-                          removeAdjustment(category.path, selectedYear);
-                        } else {
-                          setAdjustment(category.path, selectedYear, 'reduce', 15);
-                        }
-                      }}
-                    >
-                      -15%
-                    </Button>
-                    <Button
-                      variant={adjustment?.type === 'hold' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => {
-                        if (adjustment?.type === 'hold') {
-                          removeAdjustment(category.path, selectedYear);
-                        } else {
-                          setAdjustment(category.path, selectedYear, 'hold', 0);
-                        }
-                      }}
-                    >
-                      Hold
-                    </Button>
-                    <Button
-                      variant={adjustment?.type === 'lift' ? 'default' : 'outline'}
-                      size="sm"
-                      className="h-6 px-2 text-xs"
-                      onClick={() => {
-                        if (adjustment?.type === 'lift') {
-                          removeAdjustment(category.path, selectedYear);
-                        } else {
-                          setAdjustment(category.path, selectedYear, 'lift', 20);
-                        }
-                      }}
-                    >
-                      +20%
-                    </Button>
-                  </div>
-                  
-                  {/* Current Rate */}
-                  <div className="text-right">
-                    <div className={`font-semibold ${hasAdjustment ? 'text-blue-600' : 'text-gray-600'}`}>
-                      £{Math.round(adjustedRate)}
+                <div key={category.id} className="space-y-2 p-3 rounded-lg border bg-background">
+                  {/* Category Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-sm">{category.name}</div>
+                    <div className="flex items-center gap-3">
+                      <div className="text-sm text-muted-foreground">
+                        Base: £{category.baseRate}
+                      </div>
+                      <div className={`font-semibold text-sm ${hasAdjustment ? 'text-blue-600' : ''}`}>
+                        Adjusted: £{Math.round(adjustedRate)}
+                      </div>
                     </div>
                   </div>
                   
-                  {/* Adjustment Status */}
-                  <div className="text-right">
-                    <div className={`text-xs ${hasAdjustment ? 'text-blue-600' : 'text-muted-foreground'}`}>
-                      {getAdjustmentDisplay(adjustment)}
+                  {/* Slider Control */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between px-2">
+                      <div className={`text-xs font-medium ${currentValue < 0 ? 'text-red-600' : currentValue > 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                        {getAdjustmentDisplay(currentValue)}
+                      </div>
+                      {hasAdjustment && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeAdjustment(category.path, selectedYear)}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Reset
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="px-2">
+                      <Slider
+                        value={[currentValue]}
+                        onValueChange={(values) => setAdjustment(category.path, selectedYear, values[0])}
+                        min={-50}
+                        max={50}
+                        step={5}
+                        className="w-full"
+                      />
+                      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                        <span>-50%</span>
+                        <span>0</span>
+                        <span>+50%</span>
+                      </div>
+                    </div>
+                    
+                    {/* Quick Presets */}
+                    <div className="flex gap-1 px-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustment(category.path, selectedYear, -25)}
+                        className="h-6 px-2 text-xs flex-1"
+                      >
+                        -25%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustment(category.path, selectedYear, -10)}
+                        className="h-6 px-2 text-xs flex-1"
+                      >
+                        -10%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustment(category.path, selectedYear, 0)}
+                        className="h-6 px-2 text-xs flex-1"
+                      >
+                        Base
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustment(category.path, selectedYear, 10)}
+                        className="h-6 px-2 text-xs flex-1"
+                      >
+                        +10%
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAdjustment(category.path, selectedYear, 25)}
+                        className="h-6 px-2 text-xs flex-1"
+                      >
+                        +25%
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -403,18 +453,30 @@ function CategoryAdjustmentSection() {
               className="h-7 text-xs"
               onClick={() => {
                 // Environmental policy: incentivize EVs, penalize high emissions
-                setAdjustment('ev', selectedYear, 'reduce', 20);
-                setAdjustment('emissionBands.N', selectedYear, 'lift', 30);
-                setAdjustment('specialCategories.agricultural', selectedYear, 'reduce', 10);
+                setAdjustment('ev', selectedYear, -20);
+                setAdjustment('emissionBands.N', selectedYear, 30);
+                setAdjustment('specialCategories.agricultural', selectedYear, -10);
               }}
             >
               Environmental Policy
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => {
+                // Revenue maximization: increase all rates moderately
+                categories.forEach(cat => setAdjustment(cat.path, selectedYear, 15));
+              }}
+            >
+              Revenue Focus
+            </Button>
           </div>
 
           <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
-            💡 <strong>How it works:</strong> Select a year, then click the buttons to apply adjustments. 
-            Blue rates show active adjustments. Changes apply from the selected year onwards.
+            <strong>How it works:</strong> Use the sliders to adjust duty rates from -50% to +50%. 
+            Click the preset buttons for quick adjustments, or use the policy templates below. 
+            Changes apply from the selected year onwards.
           </div>
         </div>
       )}
